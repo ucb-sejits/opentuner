@@ -1,3 +1,5 @@
+import argparse
+
 __author__ = 'Chick Markley'
 
 from datetime import datetime
@@ -17,13 +19,10 @@ log = logging.getLogger(__name__)
 from opentuner import ConfigurationManipulator
 from opentuner.tuningrunmain import init_logging
 from opentuner import resultsdb
-from opentuner.resultsdb.models import DesiredResult, Machine, MachineClass, \
-    Result
+from opentuner.resultsdb.models import DesiredResult, Result
 from opentuner.search.driver import SearchDriver
-from opentuner.measurement.driver import MeasurementDriver, _cputype, \
-    _cpucount, _memorysize
+from opentuner.measurement.driver import MeasurementDriver
 from opentuner.measurement.inputmanager import FixedInputManager
-from opentuner.utils.dictconfig import DictConfigurator
 from opentuner.search import plugin
 
 
@@ -181,24 +180,24 @@ class PythonAPI():
         self.lap_time = t
         return r
 
-    def compile(self, config_data, id):
-        """
-        Compiles according to the configuration in config_data (obtained from desired_result.configuration)
-        Should use id paramater to determine output location of executable
-        Return value will be passed to run_precompiled as compile_result, useful for storing error/timeout information
-        """
-        pass
-
-    def run_precompiled(self, desired_result, input, limit, compile_result, id):
-        """
-        Runs the given desired result on input and produce a Result()
-        Abort early if limit (in seconds) is reached
-        Assumes that the executable to be measured is already compiled
-          in an executable corresponding to identifier id
-        compile_result is the return result of compile(), will be None if compile was not called
-        If id = None, must call run()
-        """
-        return self.run(desired_result, input, limit)
+    # def compile(self, config_data, id):
+    #     """
+    #     Compiles according to the configuration in config_data (obtained from desired_result.configuration)
+    #     Should use id paramater to determine output location of executable
+    #     Return value will be passed to run_precompiled as compile_result, useful for storing error/timeout information
+    #     """
+    #     pass
+    #
+    # def run_precompiled(self, desired_result, input, limit, compile_result, id):
+    #     """
+    #     Runs the given desired result on input and produce a Result()
+    #     Abort early if limit (in seconds) is reached
+    #     Assumes that the executable to be measured is already compiled
+    #       in an executable corresponding to identifier id
+    #     compile_result is the return result of compile(), will be None if compile was not called
+    #     If id = None, must call run()
+    #     """
+    #     return self.run(desired_result, input, limit)
 
     def save_final_config(self, config):
         """
@@ -210,7 +209,7 @@ class PythonAPI():
         self.measurement_interface.save_final_config(
             self.search_driver.best_result.configuration)
         best_cfg = self.search_driver.best_result.configuration
-        print("final configuration %s" % plugin.cfg_repr(best_cfg))
+        print("best and final configuration %s" % plugin.cfg_repr(best_cfg))
         self.tuning_run.final_config = self.search_driver.best_result.configuration
         self.tuning_run.state = 'COMPLETE'
         self.tuning_run.end_date = datetime.now()
@@ -268,7 +267,7 @@ class PythonAPI():
         called once to create the search.objective.SearchObjective
         """
         if self._objective is None:
-            from .search.objective import MinimizeTime
+            from opentuner.search.objective import MinimizeTime
 
             return MinimizeTime()
         return self._objective
@@ -286,8 +285,15 @@ class PythonAPI():
             self.session.flush()
 
 
-    @classmethod
-    def main(cls, args, *pargs, **kwargs):
-        from opentuner.tuningrunmain import TuningRunMain
+    @staticmethod
+    def main():
+        import argparse
+        import opentuner
 
-        return TuningRunMain(cls(args, *pargs, **kwargs), args).main()
+        parser = argparse.ArgumentParser(parents=opentuner.argparsers())
+        args = parser.parse_args()
+        api = PythonAPI('test', args)
+
+        print("machine {}".format(api.measurement_driver.get_machine().cpu))
+
+# PythonAPI.main()

@@ -20,14 +20,14 @@ from opentuner.resultsdb.models import Result
 log = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser(parents=opentuner.argparsers())
-parser.add_argument('--trials', type=int, default=100,
+parser.add_argument('--trials', type=int, default=1000,
                     help='number of trials')
 parser.add_argument('--dimensions', type=int, default=2,
                     help='dimensions for the Rosenbrock function')
 parser.add_argument('--domain', type=float, default=1000,
                     help='bound for variables in each dimension')
 parser.add_argument('--function', default='rosenbrock',
-                    choices=('rosenbrock', 'sphere', 'beale'),
+                    choices=('rosenbrock', 'sphere', 'beale', 'parabola'),
                     help='function to use')
 
 
@@ -75,7 +75,9 @@ if __name__ == '__main__':
 
     for trial in xrange(args.trials):
         cfg = api.get_next_configuration()
-#        api.report_result(rosenbrock(cfg, args))
-        api.report_result(parabola(cfg, args))
+        if args.function == 'parabola':
+            api.report_result(parabola(cfg, args))
+        else:
+            api.report_result(rosenbrock(cfg, args))
 
     api.close()
