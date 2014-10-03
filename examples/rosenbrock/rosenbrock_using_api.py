@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# This is a simple testcase purely for testing the autotuner
+# This is a simple testcase purely for testing the python tuner api
 #
 # http://en.wikipedia.org/wiki/Rosenbrock_function
 #

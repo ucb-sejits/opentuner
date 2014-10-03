@@ -1,5 +1,23 @@
 __author__ = 'Chick Markley'
 
+"""Python API interface to opentuner
+
+This module was built to a handle our particular use case, where
+we are parsing python functions and optimizing JIT code generation
+for time or energy.  The JIT aspect made it difficult to use the
+standard opentuner methodology, where tuning run main controls the
+compilation and execution,
+
+The staticmethod main() method below, shows a simple example of use
+The python gets an api object, and uses that object to get new configurations
+and report the results of a trial.
+
+If the search space is exhausted the API will just return the best configuration
+found.
+
+See also: examples/rosenbrock/rosenbrock_using_api
+"""
+
 from datetime import datetime
 import os
 import math
@@ -127,6 +145,9 @@ class PythonAPI():
 
     def get_search_space_order(self):
         return math.log(self.manipulator.search_space_size(), 10)
+
+    def is_configuration_exhausted(self):
+        return self.best_and_final is not None
 
     def get_next_configuration(self):
         if self.best_and_final:
