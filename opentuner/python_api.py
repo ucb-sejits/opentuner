@@ -1,5 +1,3 @@
-import argparse
-
 __author__ = 'Chick Markley'
 
 from datetime import datetime
@@ -82,6 +80,8 @@ class PythonAPI():
         self.manipulator = manipulator
         self.objective = objective
         self.objective_copy = copy.copy(objective)
+        self.driver = None
+        self.best_and_final = None
 
         program_version = (self.measurement_interface
                            .db_program_version(self.session))
@@ -129,6 +129,9 @@ class PythonAPI():
         return math.log(self.manipulator.search_space_size(), 10)
 
     def get_next_configuration(self):
+        if self.best_and_final:
+            return self.best_and_final.data
+
         if not self.pending_desired_results:
             self.search_driver.run_generation_techniques()
             query_result = (
@@ -139,12 +142,20 @@ class PythonAPI():
             import collections
             self.pending_desired_results = collections.deque(query_result.all())
 
-        self.desired_result = self.pending_desired_results.popleft()
+        if len(self.pending_desired_results) == 0:
+            self.best_and_final = self.search_driver.best_result.configuration
+            self.desired_result = self.search_driver.best_result
+        else:
+            self.desired_result = self.pending_desired_results.popleft()
+
         self.lap_timer()
         # print(self.desired_result.configuration.data)
         return self.desired_result.configuration.data
 
     def report_result(self, result):
+        if self.best_and_final:
+            return
+
         result.configuration = self.desired_result.configuration
         result.machine = self.machine
         result.tuning_run = self.tuning_run
@@ -159,8 +170,8 @@ class PythonAPI():
         self.commit()
         self.search_driver.plugin_proxy.after_results_wait()
         for result in (self.search_driver.results_query()
-                               .filter_by(was_new_best=None)
-                               .order_by(Result.collection_date)):
+                           .filter_by(was_new_best=None)
+                           .order_by(Result.collection_date)):
             if self.search_driver.best_result is None:
                 self.search_driver.best_result = result
                 result.was_new_best = True
@@ -203,20 +214,20 @@ class PythonAPI():
         """
         called at the end of autotuning with the best resultsdb.models.Configuration
         """
-        pass
+        self.best_and_final = config
 
     def close(self):
         self.measurement_interface.save_final_config(
             self.search_driver.best_result.configuration)
-        best_cfg = self.search_driver.best_result.configuration
-        print("best and final configuration %s" % plugin.cfg_repr(best_cfg))
+        self.best_and_final = self.search_driver.best_result.configuration
+        print("best and final configuration %s" % plugin.cfg_repr(self.best_and_final))
         self.tuning_run.final_config = self.search_driver.best_result.configuration
         self.tuning_run.state = 'COMPLETE'
         self.tuning_run.end_date = datetime.now()
         self.commit(force=True)
         self.session.close()
         # return self.tuning_run.final_config
-        return best_cfg
+        return self.best_and_final
 
     def db_program_version(self, session):
         """return a version identifier for the program being tuned"""
@@ -256,8 +267,9 @@ class PythonAPI():
         """
         if self._manipulator is None:
             msg = (
-            'MeasurementInterface.manipulator() must be implemented or a '
-            '"manipulator=..." must be provided to the constructor')
+                'MeasurementInterface.manipulator() must be implemented or a '
+                '"manipulator=..." must be provided to the constructor'
+            )
             log.error(msg)
             raise Exception(msg)
         return self._manipulator
@@ -284,16 +296,33 @@ class PythonAPI():
         else:
             self.session.flush()
 
-
     @staticmethod
     def main():
         import argparse
         import opentuner
+        from opentuner.search.manipulator import IntegerParameter
+        from opentuner.resultsdb.models import Result
 
         parser = argparse.ArgumentParser(parents=opentuner.argparsers())
         args = parser.parse_args()
         api = PythonAPI('test', args)
+        api.add_parameter(IntegerParameter('x', 0, 6))
 
         print("machine {}".format(api.measurement_driver.get_machine().cpu))
+
+        def test_func(cfg):
+            x = cfg['x']
+            y = 10 + abs(5 - x)
+            print("f({}) -> {}".format(x, y))
+            return Result(time=y)
+
+        for x in xrange(10):
+            cfg = api.get_next_configuration()
+            result = test_func(cfg)
+            api.report_result(result)
+
+        api.close()
+
+PythonAPI.main()
 
 # PythonAPI.main()
