@@ -257,7 +257,8 @@ class PythonAPI():
     def program_version(self):
         return self._version
 
-    def file_hash(self, filename):
+    @staticmethod
+    def file_hash(filename):
         """helper used to generate program versions"""
         return hashlib.sha256(open(filename).read()).hexdigest()
 
@@ -306,23 +307,21 @@ class PythonAPI():
         parser = argparse.ArgumentParser(parents=opentuner.argparsers())
         args = parser.parse_args()
         api = PythonAPI('test', args)
-        api.add_parameter(IntegerParameter('x', 0, 6))
+        api.add_parameter(IntegerParameter('x', -200, 200))
 
         print("machine {}".format(api.measurement_driver.get_machine().cpu))
 
         def test_func(cfg):
             x = cfg['x']
-            y = 10 + abs(5 - x)
+            y = ( x - 10 ) * ( x - 10 )
             print("f({}) -> {}".format(x, y))
             return Result(time=y)
 
-        for x in xrange(10):
+        for x in xrange(500):
             cfg = api.get_next_configuration()
             result = test_func(cfg)
             api.report_result(result)
 
         api.close()
-
-PythonAPI.main()
 
 # PythonAPI.main()
