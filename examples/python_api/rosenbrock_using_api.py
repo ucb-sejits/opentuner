@@ -13,7 +13,7 @@ import argparse
 import logging
 
 import opentuner
-from opentuner.python_api import PythonAPI
+from opentuner.py_api import PyAPI
 from opentuner.search.manipulator import FloatParameter
 from opentuner.resultsdb.models import Result
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         args.domain = 4.5
         args.dimensions = 2
 
-    api = PythonAPI('rosenbrock', args)
+    api = PyAPI('rosenbrock', args)
     for d in xrange(args.dimensions):
         api.add_parameter(FloatParameter( d, -args.domain, args.domain))
 

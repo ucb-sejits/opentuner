@@ -42,7 +42,7 @@ from opentuner.measurement.inputmanager import FixedInputManager
 from opentuner.search import plugin
 
 
-class PythonAPI():
+class PyAPI():
     """
     simplified interface to opentuner search, currently this does not manage
     the compiler or input options
@@ -327,7 +327,7 @@ class PythonAPI():
 
         parser = argparse.ArgumentParser(parents=opentuner.argparsers())
         args = parser.parse_args()
-        api = PythonAPI('test', args)
+        api = PyAPI('test', args)
         api.add_parameter(IntegerParameter('x', -200, 200))
 
         print("machine {}".format(api.measurement_driver.get_machine().cpu))
