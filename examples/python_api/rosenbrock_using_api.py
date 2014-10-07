@@ -53,6 +53,7 @@ def rosenbrock(cfg, args):
                (2.625 - x + x * y ** 3) ** 2)
     return Result(time=val)
 
+
 def parabola(cfg, args):
     x, y = cfg[0], cfg[1]
     z = (x*x + y*y)
@@ -68,10 +69,9 @@ if __name__ == '__main__':
 
     api = PyAPI('rosenbrock', args)
     for d in xrange(args.dimensions):
-        api.add_parameter(FloatParameter( d, -args.domain, args.domain))
+        api.add_parameter(FloatParameter(d, -args.domain, args.domain))
 
     print("search space size 10^{:.2f} trials {}".format(api.get_search_space_order(), args.trials))
-
 
     for trial in xrange(args.trials):
         cfg = api.get_next_configuration()
