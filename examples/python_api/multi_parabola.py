@@ -23,7 +23,14 @@ parser.add_argument('--domain', type=float, default=1000,
                     help='bound for variables in each dimension')
 
 
-def parabola(cfg):
+def parabola_1(cfg):
+    x, y = cfg[0], cfg[1]
+    z = (x*x + y*y)
+    print("{},{},{}".format(x, y, z))
+    return Result(time=z)
+
+
+def parabola_2(cfg):
     x, y = cfg[0], cfg[1]
     z = (x*x + y*y)
     print("{},{},{}".format(x, y, z))
@@ -32,14 +39,22 @@ def parabola(cfg):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    api = PyAPI('parabola', args)
+    api_1 = PyAPI('parabola_1', args)
     for d in xrange(args.dimensions):
-        api.add_parameter(FloatParameter(d, -args.domain, args.domain))
+        api_1.add_parameter(FloatParameter(d, -args.domain, args.domain))
 
-    print("search space size 10^{:.2f} trials {}".format(api.get_search_space_order(), args.trials))
+    api_2 = PyAPI('parabola_2', args)
+    for d in xrange(args.dimensions):
+        api_2.add_parameter(FloatParameter(d, -args.domain, args.domain))
+
+    print("search space size 10^{:.2f} trials {}".format(api_1.get_search_space_order(), args.trials))
 
     for trial in xrange(args.trials):
-        cfg = api.get_next_configuration()
-        api.report_result(parabola(cfg))
+        cfg_1 = api_1.get_next_configuration()
+        api_1.report_result(parabola_1(cfg_1))
 
-    api.close()
+        cfg_2 = api_2.get_next_configuration()
+        api_2.report_result(parabola_2(cfg_2))
+
+    api_1.close()
+    api_2.close()

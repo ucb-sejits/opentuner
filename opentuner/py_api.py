@@ -55,6 +55,8 @@ class PyAPI():
                  measurement_driver=MeasurementDriver):
         init_logging()
 
+        args = copy.deepcopy(args)
+
         self.name = name
         self._manipulator = ConfigurationManipulator()
         manipulator = self.manipulator()
@@ -64,30 +66,31 @@ class PyAPI():
         self._project = None
         self._program = None
         self._version = None
+        self._database_name = None
         objective = self.objective()
 
         if not args.database:
             if name is None:
-                args.database = 'opentuner.db'
+                self._database_name = 'opentuner.db'
             else:
-                args.database = name
-                if not args.database.endswith(".db"):
-                    args.database += ".db"
+                self._database_name = name
+                if not self._database_name.endswith(".db"):
+                    self._database_name += ".db"
 
-        if not os.path.isdir(args.database):
-            os.mkdir(args.database)
-        args.database = 'sqlite:///' + os.path.join(args.database,
+        if not os.path.isdir(self._database_name):
+            os.mkdir(self._database_name)
+        self._database_name = 'sqlite:///' + os.path.join(self._database_name,
                                                     socket.gethostname() + '.db')
 
         if not args.label:
             args.label = 'unnamed'
 
-        #self.fake_commit = ('sqlite' in args.database)
-        self.fake_commit = True
-
         self.args = args
 
-        self.engine, self.Session = resultsdb.connect(args.database)
+        #self.fake_commit = ('sqlite' in self._database_name)
+        self.fake_commit = True
+
+        self.engine, self.Session = resultsdb.connect(self._database_name)
         self.session = self.Session()
         self.tuning_run = None
         self.search_driver_cls = search_driver
