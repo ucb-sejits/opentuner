@@ -40,7 +40,9 @@ class TuningRunManager(tuningrunmain.TuningRunMain):
     The best configuration found so far.  From the current tuning run only.
     """
     try:
-      return self.search_driver.best_result.configuration.data
+      if self.search_driver.best_result is None:
+        self.search_driver.process_new_results()
+        return self.search_driver.best_result.configuration.data
     except AttributeError:
       return None
 
@@ -50,9 +52,12 @@ class TuningRunManager(tuningrunmain.TuningRunMain):
     connections.
     """
     self.search_driver.external_main_end()
-    self.measurement_interface.save_final_config(
+    if self.search_driver.best_result is None:
+      self.search_driver.process_new_results()
+    if self.search_driver.best_result is not None:
+      self.measurement_interface.save_final_config(
         self.search_driver.best_result.configuration)
-    self.tuning_run.final_config = self.search_driver.best_result.configuration
+      self.tuning_run.final_config = self.search_driver.best_result.configuration
     self.tuning_run.state = 'COMPLETE'
     self.tuning_run.end_date = datetime.now()
     self.commit(force=True)
