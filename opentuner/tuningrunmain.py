@@ -114,6 +114,9 @@ class TuningRunMain(object):
     input_manager = measurement_interface.input_manager()
     objective = measurement_interface.objective()
 
+    if not os.path.isdir('opentuner.db'):
+      os.mkdir('opentuner.db')
+
     if not args.database:
       #args.database = 'sqlite://' #in memory
       if not os.path.isdir('opentuner.db'):
