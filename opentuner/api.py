@@ -42,7 +42,7 @@ class TuningRunManager(tuningrunmain.TuningRunMain):
     try:
       if self.search_driver.best_result is None:
         self.search_driver.process_new_results()
-        return self.search_driver.best_result.configuration.data
+      return self.search_driver.best_result.configuration.data
     except AttributeError:
       return None
 
