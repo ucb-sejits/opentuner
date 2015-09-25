@@ -173,6 +173,31 @@ class MinimizeTime(SearchObjective):
     return result1.time / result2.time
 
 
+class MinimizeEnergy(SearchObjective):
+  """
+  minimize Result().energy
+  """
+
+  def result_order_by_terms(self):
+    """return database columns required to order by the objective"""
+    return [Result.energy]
+
+  def result_compare(self, result1, result2):
+    """cmp() compatible comparison of resultsdb.models.Result"""
+    return cmp(result1.energy, result2.energy)
+
+  def config_compare(self, config1, config2):
+    """cmp() compatible comparison of resultsdb.models.Configuration"""
+    return cmp(min(map(_.energy, self.driver.results_query(config=config1))),
+               min(map(_.energy, self.driver.results_query(config=config2))))
+
+  def result_relative(self, result1, result2):
+    """return None, or a relative goodness of resultsdb.models.Result"""
+    if result2.energy == 0:
+      return float('inf') * result1.energy
+    return result1.energy / result2.energy
+
+
 class MaximizeAccuracy(SearchObjective):
   """
   maximize Result().accuracy
