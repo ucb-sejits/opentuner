@@ -148,54 +148,50 @@ def _project(a1, a2, factor):
   return a2 + factor * (a2 - a1)
 
 
-class MinimizeTime(SearchObjective):
+class MinimizeValue(SearchObjective):
+
+  __metaclass__ = abc.ABCMeta
+
+  @abc.abstractproperty
+  def value(self):
+    pass
+
+  def result_order_by_terms(self):
+    """return database columns required to order by the objective"""
+    return [Result.__dict__[self.value]]
+
+  def result_compare(self, result1, result2):
+    """cmp() compatible comparison of resultsdb.models.Result"""
+    return cmp(result1.__dict__[self.value], result2.__dict__[self.value])
+
+  def config_compare(self, config1, config2):
+    """cmp() compatible comparison of resultsdb.models.Configuration"""
+    return cmp(min(map(_.__dict__[self.value], self.driver.results_query(config=config1))),
+               min(map(_.__dict__[self.value], self.driver.results_query(config=config2))))
+
+  def result_relative(self, result1, result2):
+    """return None, or a relative goodness of resultsdb.models.Result"""
+    if result2.__dict__[self.value] == 0:
+      return float('inf') * result1.__dict__[self.value]
+    return result1.__dict__[self.value] / result2.__dict__[self.value]
+
+
+class MinimizeTime(MinimizeValue):
   """
   minimize Result().time
   """
-
-  def result_order_by_terms(self):
-    """return database columns required to order by the objective"""
-    return [Result.time]
-
-  def result_compare(self, result1, result2):
-    """cmp() compatible comparison of resultsdb.models.Result"""
-    return cmp(result1.time, result2.time)
-
-  def config_compare(self, config1, config2):
-    """cmp() compatible comparison of resultsdb.models.Configuration"""
-    return cmp(min(map(_.time, self.driver.results_query(config=config1))),
-               min(map(_.time, self.driver.results_query(config=config2))))
-
-  def result_relative(self, result1, result2):
-    """return None, or a relative goodness of resultsdb.models.Result"""
-    if result2.time == 0:
-      return float('inf') * result1.time
-    return result1.time / result2.time
+  @property
+  def value(self):
+      return 'time'
 
 
-class MinimizeEnergy(SearchObjective):
+class MinimizeEnergy(MinimizeValue):
   """
   minimize Result().energy
   """
-
-  def result_order_by_terms(self):
-    """return database columns required to order by the objective"""
-    return [Result.energy]
-
-  def result_compare(self, result1, result2):
-    """cmp() compatible comparison of resultsdb.models.Result"""
-    return cmp(result1.energy, result2.energy)
-
-  def config_compare(self, config1, config2):
-    """cmp() compatible comparison of resultsdb.models.Configuration"""
-    return cmp(min(map(_.energy, self.driver.results_query(config=config1))),
-               min(map(_.energy, self.driver.results_query(config=config2))))
-
-  def result_relative(self, result1, result2):
-    """return None, or a relative goodness of resultsdb.models.Result"""
-    if result2.energy == 0:
-      return float('inf') * result1.energy
-    return result1.energy / result2.energy
+  @property
+  def value(self):
+      return 'time'
 
 
 class MaximizeAccuracy(SearchObjective):
